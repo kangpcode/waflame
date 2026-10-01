@@ -4,6 +4,7 @@ export * from './constants/permissions.js';
 export * from './constants/messages.js';
 export * from './constants/devices.js';
 export * from './constants/campaigns.js';
+export * from './constants/queues.js';
 
 // Schemas
 export * from './schemas/auth.schema.js';
