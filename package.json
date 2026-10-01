@@ -1,0 +1,27 @@
+{
+  "name": "waflame-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Waflame - Enterprise Multi-Tenant WhatsApp Gateway & WABA Platform",
+  "packageManager": "pnpm@12.4.1",
+  "scripts": {
+    "build": "pnpm --recursive run build",
+    "dev": "pnpm --filter @waflame/api dev",
+    "dev:all": "pnpm --parallel run dev",
+    "db:generate": "pnpm --filter @waflame/database db:generate",
+    "db:migrate": "pnpm --filter @waflame/database db:migrate",
+    "db:push": "pnpm --filter @waflame/database db:push",
+    "db:seed": "pnpm --filter @waflame/database db:seed",
+    "db:studio": "pnpm --filter @waflame/database db:studio",
+    "lint": "eslint . --ext .ts,.vue",
+    "format": "prettier --write \"**/*.{ts,js,json,md,vue}\"",
+    "clean": "pnpm --recursive exec rm -rf dist node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "dotenv": "^16.4.7",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

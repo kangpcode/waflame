@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: waflame-mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-waflame}
+      MYSQL_USER: ${DB_USER:-waflame}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-waflame_secret}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - waflame-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: waflame-redis
+    restart: always
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - waflame-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: waflame-api
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=mysql://${DB_USER:-waflame}:${DB_PASSWORD:-waflame_secret}@mariadb:3306/${DB_NAME:-waflame}
+      - REDIS_URL=redis://redis:6379
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - waflame-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    container_name: waflame-worker
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://${DB_USER:-waflame}:${DB_PASSWORD:-waflame_secret}@mariadb:3306/${DB_NAME:-waflame}
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - waflame-net
+
+  wa-engine:
+    build:
+      context: .
+      dockerfile: docker/wa-engine.Dockerfile
+    container_name: waflame-wa-engine
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://${DB_USER:-waflame}:${DB_PASSWORD:-waflame_secret}@mariadb:3306/${DB_NAME:-waflame}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - waflame-net
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    container_name: waflame-web
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - waflame-net
+
+networks:
+  waflame-net:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+  redis_data:
