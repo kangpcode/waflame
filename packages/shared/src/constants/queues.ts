@@ -3,9 +3,19 @@ export const QueueName = {
   CAMPAIGN_BROADCAST: 'waflame-campaign-broadcast',
   CSV_IMPORT: 'waflame-csv-import',
   GROUP_INVITE: 'waflame-group-invite',
+  WEBHOOK_OUTBOUND: 'waflame-webhook-outbound',
 } as const;
 
 export type QueueNameValue = (typeof QueueName)[keyof typeof QueueName];
+
+export interface WebhookOutboundJobData {
+  tenantId: string;
+  webhookId: string;
+  url: string;
+  secretKey: string;
+  event: string;
+  payload: any;
+}
 
 export interface MessageSendJobData {
   tenantId: string;

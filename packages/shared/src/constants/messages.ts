@@ -10,6 +10,7 @@ export const MessageType = {
   TEMPLATE: 'TEMPLATE',
   REACTION: 'REACTION',
   POLL: 'POLL',
+  INTERNAL_NOTE: 'INTERNAL_NOTE',
 } as const;
 
 export type MessageTypeValue = (typeof MessageType)[keyof typeof MessageType];

@@ -2,6 +2,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import cookie from '@fastify/cookie';
+import multipart from '@fastify/multipart';
 import { env } from './config/env.js';
 
 // Plugins
@@ -19,6 +20,9 @@ import { messagesRoutes } from './modules/messages/messages.routes.js';
 import { waGroupsRoutes } from './modules/wa-groups/wa-groups.routes.js';
 import { templatesRoutes } from './modules/templates/templates.routes.js';
 import { metaWebhookRoutes } from './modules/webhooks/meta-webhook.routes.js';
+import { contactsRoutes } from './modules/contacts/contacts.routes.js';
+import { campaignsRoutes } from './modules/campaigns/campaigns.routes.js';
+import { importsRoutes } from './modules/imports/imports.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -55,6 +59,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(cookie);
+  await app.register(multipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB max file size
+    },
+  });
 
   // Core Infrastructure Plugins
   await app.register(prismaPlugin);
@@ -81,6 +90,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(waGroupsRoutes, { prefix: '/api/v1/wa-groups' });
   await app.register(templatesRoutes, { prefix: '/api/v1/templates' });
   await app.register(metaWebhookRoutes, { prefix: '/api/v1/webhooks' });
+  await app.register(contactsRoutes, { prefix: '/api/v1/contacts' });
+  await app.register(campaignsRoutes, { prefix: '/api/v1/campaigns' });
+  await app.register(importsRoutes, { prefix: '/api/v1/imports' });
 
   // Centralized Error Handler
   app.setErrorHandler((error: any, request, reply) => {
