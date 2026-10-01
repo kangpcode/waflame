@@ -23,6 +23,12 @@ import { metaWebhookRoutes } from './modules/webhooks/meta-webhook.routes.js';
 import { contactsRoutes } from './modules/contacts/contacts.routes.js';
 import { campaignsRoutes } from './modules/campaigns/campaigns.routes.js';
 import { importsRoutes } from './modules/imports/imports.routes.js';
+import { inboxRoutes } from './modules/inbox/inbox.routes.js';
+import { autoRepliesRoutes } from './modules/auto-replies/auto-replies.routes.js';
+import { webhooksOutboundRoutes } from './modules/webhooks-outbound/webhooks-outbound.routes.js';
+import { apiKeysRoutes } from './modules/api-keys/api-keys.routes.js';
+import { publicApiRoutes } from './modules/public-api/public-api.routes.js';
+import { auditLogsRoutes } from './modules/audit-logs/audit-logs.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -93,6 +99,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(contactsRoutes, { prefix: '/api/v1/contacts' });
   await app.register(campaignsRoutes, { prefix: '/api/v1/campaigns' });
   await app.register(importsRoutes, { prefix: '/api/v1/imports' });
+  await app.register(inboxRoutes, { prefix: '/api/v1/inbox' });
+  await app.register(autoRepliesRoutes, { prefix: '/api/v1/auto-replies' });
+  await app.register(webhooksOutboundRoutes, { prefix: '/api/v1/webhooks-outbound' });
+  await app.register(apiKeysRoutes, { prefix: '/api/v1/api-keys' });
+  await app.register(publicApiRoutes, { prefix: '/api/v1/public' });
+  await app.register(auditLogsRoutes, { prefix: '/api/v1/audit-logs' });
 
   // Centralized Error Handler
   app.setErrorHandler((error: any, request, reply) => {

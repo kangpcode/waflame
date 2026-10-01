@@ -83,7 +83,7 @@ export class WebhooksOutboundService {
       'dispatch',
       {
         tenantId,
-        webhookId: 'test-ping',
+        webhookId: input.webhookId || 'test-ping',
         url: input.url,
         secretKey: input.secretKey,
         event: input.event,

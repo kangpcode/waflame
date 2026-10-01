@@ -5,10 +5,18 @@ import {
   MessageDirection,
   MessageStatus,
   MessageStatusValue,
+  WebhookEvent,
   decryptAES256,
   toWhatsAppJid,
 } from '@waflame/shared';
 import { env } from '../../config/env.js';
+import { AutoRepliesService } from '../auto-replies/auto-replies.service.js';
+import { MessagesService } from '../messages/messages.service.js';
+import { WebhooksOutboundService } from '../webhooks-outbound/webhooks-outbound.service.js';
+
+const autoRepliesService = new AutoRepliesService();
+const webhooksOutboundService = new WebhooksOutboundService();
+const messagesService = new MessagesService();
 
 export function verifyMetaSignature(
   rawBody: string | Buffer,
@@ -205,6 +213,41 @@ export class MetaWebhookController {
                 message: saved,
               })
             );
+
+            // Dispatch Outbound Webhook to user's endpoints
+            webhooksOutboundService
+              .dispatchEvent(matchedDevice.tenantId, WebhookEvent.MESSAGE_INBOUND, {
+                messageId: saved.id,
+                conversationId: conversation.id,
+                deviceId: matchedDevice.id,
+                from: msg.from,
+                content,
+                mediaUrl,
+                timestamp: saved.deliveredAt,
+              })
+              .catch((e) => request.log.warn(`Webhook outbound dispatch error: ${e.message}`));
+
+            // Trigger Auto Reply rules
+            autoRepliesService
+              .matchAndGetReply(
+                matchedDevice.tenantId,
+                matchedDevice.id,
+                content || '',
+                conversation.unreadCount <= 1
+              )
+              .then(async (match) => {
+                if (match) {
+                  await messagesService.sendMessage(matchedDevice.tenantId, {
+                    deviceId: matchedDevice.id,
+                    to: targetJid,
+                    type: match.responseType as any,
+                    content: match.responseContent,
+                    mediaUrl: match.mediaUrl || undefined,
+                    templateLanguage: 'id',
+                  });
+                }
+              })
+              .catch((e) => request.log.warn(`Auto-reply execution error: ${e.message}`));
           }
         }
 
@@ -250,6 +293,18 @@ export class MetaWebhookController {
                 errorMessage,
               })
             );
+
+            // Dispatch Outbound Webhook for delivery receipts
+            webhooksOutboundService
+              .dispatchEvent(matchedDevice.tenantId, WebhookEvent.MESSAGE_STATUS, {
+                externalMessageId: externalId,
+                deviceId: matchedDevice.id,
+                status: appStatus,
+                errorCode,
+                errorMessage,
+                timestamp,
+              })
+              .catch((e) => request.log.warn(`Webhook status dispatch error: ${e.message}`));
           }
         }
       }

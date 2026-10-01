@@ -26,6 +26,7 @@ export const UpdateWebhookSchema = CreateWebhookSchema.partial();
 export type UpdateWebhookInput = z.infer<typeof UpdateWebhookSchema>;
 
 export const TestWebhookSchema = z.object({
+  webhookId: z.string().uuid().optional(),
   url: z.string().url(),
   secretKey: z.string().min(16),
   event: z

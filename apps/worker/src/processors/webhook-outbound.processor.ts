@@ -54,20 +54,23 @@ export function createWebhookOutboundWorker() {
 
       const executionTimeMs = Date.now() - startTime;
 
-      // Log delivery result
-      await prisma.webhookLog.create({
-        data: {
-          webhookId,
-          tenantId,
-          event,
-          payload,
-          responseStatus,
-          responseBody,
-          executionTimeMs,
-          retryCount: job.attemptsMade,
-          status,
-        },
-      });
+      // Log delivery result if webhook exists
+      const hookExists = await prisma.webhook.findUnique({ where: { id: webhookId } });
+      if (hookExists) {
+        await prisma.webhookLog.create({
+          data: {
+            webhookId,
+            tenantId,
+            event,
+            payload,
+            responseStatus,
+            responseBody,
+            executionTimeMs,
+            retryCount: job.attemptsMade,
+            status,
+          },
+        });
+      }
 
       if (status === 'FAILED') {
         throw new Error(
